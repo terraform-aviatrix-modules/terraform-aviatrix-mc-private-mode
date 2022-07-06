@@ -57,19 +57,19 @@ variable "secondary_regions" {
 
   validation {
     condition = alltrue([
-    for k, v in var.regions : !can(regex("^cn-|^china ", lower(v.region)))])
+    for k, v in var.secondary_regions : !can(regex("^cn-|^china ", lower(v.region)))])
     error_message = "Regions in China are not supported."
   }
 
   validation {
     condition = alltrue([
-    for k, v in var.regions : contains(["aws", "azure", ], lower(v.cloud))])
+    for k, v in var.secondary_regions : contains(["aws", "azure", ], lower(v.cloud))])
     error_message = "Invalid cloud type detected. Choose AWS or Azure for each entry."
   }
 
   validation {
     condition = alltrue([
-    for k, v in var.regions : length(v.vpc_name) <= 30])
+    for k, v in var.secondary_regions : length(v.vpc_name) <= 30])
     error_message = "Detected a vpc_name > 30 characters in one of entries. Max length is 30 characters."
   }
 }
