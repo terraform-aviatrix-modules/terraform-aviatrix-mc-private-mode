@@ -14,7 +14,7 @@ Module version | Terraform version | Controller version | Terraform provider ver
 v1.0.0 | >= 1.1.0 | >= 6.8 | ~> 2.23.0
 
 ### Usage Example
-```
+```hcl
 module "private_mode" {
   source  = "terraform-aviatrix-modules/mc-private-mode/aviatrix"
   version = "1.0.0"
