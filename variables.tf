@@ -24,13 +24,6 @@ variable "controller_region" {
   }
 }
 
-variable "multi_cloud" {
-  description = "Whether to enable multi-cloud support for private mode."
-  type        = bool
-  default     = false
-  nullable    = false
-}
-
 variable "enable_private_mode" {
   description = "Whether to enable Private Mode on an Aviatrix Controller."
   type        = bool
@@ -46,38 +39,36 @@ variable "copilot_instance_id" {
 
 variable "proxies" {
   description = "Set of Controller proxies for Private Mode."
-  type        = string
-  default     = null
+  type        = list(string)
+  default     = []
 }
 
-variable "secondary_regions" {
-  description = "Map of secondary reagions where a loadbalancer needs to be initiated."
+variable "secondary_aws_regions" {
+  description = "Map of secondary AWS regions where a loadbalancer needs to be initiated."
   type        = map(any)
   default     = {}
 
   validation {
     condition = alltrue([
-    for k, v in var.secondary_regions : !can(regex("^cn-|^china ", lower(v.region)))])
+    for k, v in var.secondary_aws_regions : !can(regex("^cn-|^china ", lower(v.region)))])
     error_message = "Regions in China are not supported."
   }
 
   validation {
     condition = alltrue([
-    for k, v in var.secondary_regions : contains(["aws", "azure", ], lower(v.cloud))])
-    error_message = "Invalid cloud type detected. Choose AWS or Azure for each entry."
-  }
-
-  validation {
-    condition = alltrue([
-    for k, v in var.secondary_regions : length(v.vpc_name) <= 30])
+    for k, v in var.secondary_aws_regions : length(v.vpc_name) <= 30])
     error_message = "Detected a vpc_name > 30 characters in one of entries. Max length is 30 characters."
   }
 }
 
-locals {
-  is_china = can(regex("^cn-|^china ", lower(var.region))) && contains(["aws", "azure"], local.cloud)
-  is_gov   = can(regex("^us-gov|^usgov |^usdod ", lower(var.region))) && contains(["aws", "azure"], local.cloud)
+variable "multi_cloud_region" {
+  description = "Details of multi-cloud region (non-AWS) where the loadbalancer needs to be initiated."
+  #Fix type and validation
+  default  = {}
+  nullable = false
+}
 
+locals {
   cloud_type_map = {
     azure = 8,
     aws   = 1,
@@ -87,4 +78,11 @@ locals {
     azure = 32,
     aws   = 256,
   }
+
+  multi_cloud    = var.multi_cloud_region != tomap({})
+  connecting_vpc = [for k, v in aviatrix_vpc.controller_cloud : v.vpc_id if v.region == var.multi_cloud_region.endpoint_region]
+
+  controller_vpc     = { (var.controller_region) = var.controller_vpc_id }
+  secondary_aws_vpcs = { for k, v in var.secondary_aws_regions : v.region => aviatrix_vpc.controller_cloud[k].vpc_id }
+  azure_vnet         = local.multi_cloud ? { azure = aviatrix_vpc.multi_cloud[0].vpc_id } : {}
 }
