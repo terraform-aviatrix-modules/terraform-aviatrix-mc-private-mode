@@ -79,6 +79,51 @@ resource "aviatrix_vpc" "multi_cloud" {
   ]
 }
 
+#Multicloud endpoint creation
+resource "aviatrix_vpc" "multi_cloud_endpoint" {
+  count = local.multi_cloud ? 1 : 0
+
+  account_name = try(var.multi_cloud_region.endpoint_account, var.controller_account)
+  cloud_type = (
+    can(regex("^us-gov|^usgov |^usdod ", lower(var.multi_cloud_region.endpoint_region))) ?
+    lookup(local.cloud_type_map_gov, lower("AWS"), null)
+    :
+    lookup(local.cloud_type_map, lower("AWS"), null)
+  )
+
+  region               = var.multi_cloud_region.endpoint_region
+  name                 = try(var.multi_cloud_region.endpoint_name, format("private-mode-endpoint-%s", var.multi_cloud_region.endpoint_region))
+  cidr                 = var.multi_cloud_region.endpoint_cidr
+  aviatrix_transit_vpc = false
+  aviatrix_firenet_vpc = false
+  private_mode_subnets = true
+
+  depends_on = [
+    aviatrix_controller_private_mode_config.default #Private mode needs te be enabled before we can start configuring it.
+  ]
+}
+
+resource "aviatrix_private_mode_multicloud_endpoint" "default" {
+  count = local.multi_cloud ? 1 : 0
+
+  account_name         = try(var.multi_cloud_region.endpoint_account, var.controller_account)
+  vpc_id               = aviatrix_vpc.multi_cloud_endpoint[0].vpc_id
+  region               = var.multi_cloud_region.endpoint_region
+  controller_lb_vpc_id = local.connecting_vpc[0]
+
+  depends_on = [
+    aviatrix_controller_private_mode_config.default, #Private mode needs te be enabled before we can start configuring it.
+    aviatrix_private_mode_lb.controller_cloud,       #A loadbalancer needs to be deployed in same region, before we can deploy
+  ]
+
+  lifecycle {
+    precondition {
+      condition     = length(local.connecting_vpc) == 1
+      error_message = format("Make sure there is a secondary AWS region defined in region %s.", var.multi_cloud_region.endpoint_region)
+    }
+  }
+}
+
 resource "aviatrix_private_mode_lb" "multi_cloud" {
   count = local.multi_cloud ? 1 : 0
 
@@ -101,49 +146,4 @@ resource "aviatrix_private_mode_lb" "multi_cloud" {
     aviatrix_controller_private_mode_config.default,   #Private mode needs te be enabled before we can start configuring it.
     aviatrix_private_mode_multicloud_endpoint.default, #Controller cloud endpoint needs to be built before we can deploy the multi-cloud loadbalander.
   ]
-}
-
-#Multicloud endpoint creation
-resource "aviatrix_vpc" "multi_cloud_endpoint" {
-  count = local.multi_cloud ? 1 : 0
-
-  account_name = var.multi_cloud_region.endpoint_account
-  cloud_type = (
-    can(regex("^us-gov|^usgov |^usdod ", lower(var.multi_cloud_region.endpoint_region))) ?
-    lookup(local.cloud_type_map_gov, lower("AWS"), null)
-    :
-    lookup(local.cloud_type_map, lower("AWS"), null)
-  )
-
-  region               = var.multi_cloud_region.endpoint_region
-  name                 = var.multi_cloud_region.endpoint_name
-  cidr                 = var.multi_cloud_region.endpoint_cidr
-  aviatrix_transit_vpc = false
-  aviatrix_firenet_vpc = false
-  private_mode_subnets = true
-
-  depends_on = [
-    aviatrix_controller_private_mode_config.default #Private mode needs te be enabled before we can start configuring it.
-  ]
-}
-
-resource "aviatrix_private_mode_multicloud_endpoint" "default" {
-  count = local.multi_cloud ? 1 : 0
-
-  account_name         = var.multi_cloud_region.endpoint_account
-  vpc_id               = aviatrix_vpc.multi_cloud_endpoint[0].vpc_id
-  region               = var.multi_cloud_region.endpoint_region
-  controller_lb_vpc_id = local.connecting_vpc[0]
-
-  depends_on = [
-    aviatrix_controller_private_mode_config.default, #Private mode needs te be enabled before we can start configuring it.
-    aviatrix_private_mode_lb.controller_cloud,       #A loadbalancer needs to be deployed in same region, before we can deploy
-  ]
-
-  lifecycle {
-    precondition {
-      condition     = length(local.connecting_vpc) == 1
-      error_message = format("Make sure there is a secondary AWS region defined in region %s.", var.multi_cloud_region.endpoint_region)
-    }
-  }
 }

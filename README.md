@@ -40,6 +40,18 @@ module "private_mode" {
         cidr     = "10.255.0.16/28",
     } 
   }
+
+  multi_cloud_region = {
+    region           = "West Europe",
+    vpc_name         = "mc-pm",
+    cidr             = "10.255.255.0/24",
+    account          = "Azure",
+    endpoint_region  = "eu-west-2",       
+    endpoint_cidr    = "10.255.254.0/24",
+    endpoint_name    = "aws-endpoint",        #This field is optional. When left empty, it will automatically generate a name based on the region.
+    endpoint_account = "AWS",                 #This field is optional. When left empty, it will fall back to controller account.
+    proxies          = {},
+  }  
 }
 ```
 
