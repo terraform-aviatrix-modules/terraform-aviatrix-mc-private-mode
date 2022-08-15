@@ -55,30 +55,6 @@ resource "aviatrix_private_mode_lb" "controller_cloud" {
   ]
 }
 
-#Multicloud resources (Azure)
-resource "aviatrix_vpc" "multi_cloud" {
-  count = local.multi_cloud ? 1 : 0
-
-  account_name = var.multi_cloud_region.account
-  cloud_type = (
-    can(regex("^us-gov|^usgov |^usdod ", lower(var.multi_cloud_region.region))) ?
-    lookup(local.cloud_type_map_gov, "azure", null)
-    :
-    lookup(local.cloud_type_map, "azure", null)
-  )
-
-  region               = var.multi_cloud_region.region
-  name                 = var.multi_cloud_region.vpc_name
-  cidr                 = var.multi_cloud_region.cidr
-  aviatrix_transit_vpc = false
-  aviatrix_firenet_vpc = false
-  private_mode_subnets = true
-
-  depends_on = [
-    aviatrix_controller_private_mode_config.default #Private mode needs te be enabled before we can start configuring it.
-  ]
-}
-
 #Multicloud endpoint creation
 resource "aviatrix_vpc" "multi_cloud_endpoint" {
   count = local.multi_cloud ? 1 : 0
@@ -124,6 +100,30 @@ resource "aviatrix_private_mode_multicloud_endpoint" "default" {
   }
 }
 
+#Multicloud resources (Azure)
+resource "aviatrix_vpc" "multi_cloud" {
+  count = local.multi_cloud ? 1 : 0
+
+  account_name = var.multi_cloud_region.account
+  cloud_type = (
+    can(regex("^us-gov|^usgov |^usdod ", lower(var.multi_cloud_region.region))) ?
+    lookup(local.cloud_type_map_gov, "azure", null)
+    :
+    lookup(local.cloud_type_map, "azure", null)
+  )
+
+  region               = var.multi_cloud_region.region
+  name                 = try(var.multi_cloud_region.vpc_name, format("private-mode-%s", replace(lower(var.multi_cloud_region.region), " ", "-")))
+  cidr                 = var.multi_cloud_region.cidr
+  aviatrix_transit_vpc = false
+  aviatrix_firenet_vpc = false
+  private_mode_subnets = true
+
+  depends_on = [
+    aviatrix_controller_private_mode_config.default #Private mode needs te be enabled before we can start configuring it.
+  ]
+}
+
 resource "aviatrix_private_mode_lb" "multi_cloud" {
   count = local.multi_cloud ? 1 : 0
 
@@ -136,8 +136,8 @@ resource "aviatrix_private_mode_lb" "multi_cloud" {
   dynamic "proxies" {
     for_each = var.multi_cloud_region.proxies
     content {
-      instance_id = each.value.instance_id
-      #proxy_type  = "multicloud" #each.value.vpc_id == var.controller_vpc_id ? "controller" : "multicloud"
+      instance_id = proxies.value
+      #proxy_type  = "multicloud"
       vpc_id = aviatrix_vpc.multi_cloud[0].vpc_id
     }
   }

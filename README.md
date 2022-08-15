@@ -43,7 +43,7 @@ module "private_mode" {
 
   multi_cloud_region = {
     region           = "West Europe",
-    vpc_name         = "mc-pm",
+    vpc_name         = "mc-pm",               #This field is optional. When left empty, it will automatically generate a name based on the region.
     cidr             = "10.255.255.0/24",
     account          = "Azure",
     endpoint_region  = "eu-west-2",       
