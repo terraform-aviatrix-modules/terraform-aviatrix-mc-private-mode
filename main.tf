@@ -38,7 +38,7 @@ resource "aviatrix_vpc" "controller_cloud" {
   private_mode_subnets = true
 
   depends_on = [
-    aviatrix_controller_private_mode_config.default
+    aviatrix_controller_private_mode_config.default #Private mode needs te be enabled before we can start configuring it.
   ]
 }
 
@@ -51,8 +51,7 @@ resource "aviatrix_private_mode_lb" "controller_cloud" {
   lb_type      = "controller"
 
   depends_on = [
-    aviatrix_controller_private_mode_config.default,
-    aviatrix_vpc.controller_cloud,
+    aviatrix_controller_private_mode_config.default, #Private mode needs te be enabled before we can start configuring it.
   ]
 }
 
@@ -76,7 +75,7 @@ resource "aviatrix_vpc" "multi_cloud" {
   private_mode_subnets = true
 
   depends_on = [
-    aviatrix_controller_private_mode_config.default
+    aviatrix_controller_private_mode_config.default #Private mode needs te be enabled before we can start configuring it.
   ]
 }
 
@@ -92,14 +91,15 @@ resource "aviatrix_private_mode_lb" "multi_cloud" {
   dynamic "proxies" {
     for_each = var.multi_cloud_region.proxies
     content {
-      instance_id = var.multi_cloud_region.instance_id
-      #proxy_type  = "multicloud" #var.multi_cloud_region.vpc_id == var.controller_vpc_id ? "controller" : "multicloud"
+      instance_id = each.value.instance_id
+      #proxy_type  = "multicloud" #each.value.vpc_id == var.controller_vpc_id ? "controller" : "multicloud"
       vpc_id = aviatrix_vpc.multi_cloud[0].vpc_id
     }
   }
 
   depends_on = [
-    aviatrix_controller_private_mode_config.default
+    aviatrix_controller_private_mode_config.default,   #Private mode needs te be enabled before we can start configuring it.
+    aviatrix_private_mode_multicloud_endpoint.default, #Controller cloud endpoint needs to be built before we can deploy the multi-cloud loadbalander.
   ]
 }
 
@@ -123,7 +123,7 @@ resource "aviatrix_vpc" "multi_cloud_endpoint" {
   private_mode_subnets = true
 
   depends_on = [
-    aviatrix_controller_private_mode_config.default
+    aviatrix_controller_private_mode_config.default #Private mode needs te be enabled before we can start configuring it.
   ]
 }
 
@@ -136,7 +136,8 @@ resource "aviatrix_private_mode_multicloud_endpoint" "default" {
   controller_lb_vpc_id = local.connecting_vpc[0]
 
   depends_on = [
-    aviatrix_controller_private_mode_config.default
+    aviatrix_controller_private_mode_config.default, #Private mode needs te be enabled before we can start configuring it.
+    aviatrix_private_mode_lb.controller_cloud,       #A loadbalancer needs to be deployed in same region, before we can deploy
   ]
 
   lifecycle {
