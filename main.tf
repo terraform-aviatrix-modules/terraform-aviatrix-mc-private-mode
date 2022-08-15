@@ -22,16 +22,16 @@ resource "aviatrix_private_mode_lb" "default" {
 resource "aviatrix_vpc" "controller_cloud" {
   for_each = var.enable_private_mode ? var.secondary_aws_regions : {}
 
-  account_name = each.value.account
+  account_name = try(each.value.account, var.controller_account)
   cloud_type = (
-    can(regex("^us-gov|^usgov |^usdod ", lower(each.value.region))) ?
+    can(regex("^us-gov|^usgov |^usdod ", lower(each.key))) ?
     lookup(local.cloud_type_map_gov, "aws", null)
     :
     lookup(local.cloud_type_map, "aws", null)
   )
 
-  region               = each.value.region
-  name                 = each.value.vpc_name
+  region               = each.key
+  name                 = try(each.value.vpc_name, format("private-mode-%s", each.key))
   cidr                 = each.value.cidr
   aviatrix_transit_vpc = false
   aviatrix_firenet_vpc = false
@@ -45,9 +45,9 @@ resource "aviatrix_vpc" "controller_cloud" {
 resource "aviatrix_private_mode_lb" "controller_cloud" {
   for_each = var.enable_private_mode ? var.secondary_aws_regions : {}
 
-  account_name = each.value.account
+  account_name = try(each.value.account, var.controller_account)
   vpc_id       = aviatrix_vpc.controller_cloud[each.key].vpc_id
-  region       = each.value.region
+  region       = each.key
   lb_type      = "controller"
 
   depends_on = [

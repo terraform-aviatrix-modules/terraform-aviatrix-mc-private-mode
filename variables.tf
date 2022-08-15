@@ -56,7 +56,8 @@ variable "secondary_aws_regions" {
 
   validation {
     condition = alltrue([
-    for k, v in var.secondary_aws_regions : length(v.vpc_name) <= 30])
+      for k, v in var.secondary_aws_regions : try(length(v.vpc_name) <= 30, true)
+    ])
     error_message = "Detected a vpc_name > 30 characters in one of entries. Max length is 30 characters."
   }
 }
@@ -82,6 +83,6 @@ locals {
   connecting_vpc = local.multi_cloud ? [for k, v in aviatrix_vpc.controller_cloud : v.vpc_id if v.region == var.multi_cloud_region.endpoint_region] : []
 
   controller_vpc     = { (var.controller_region) = var.controller_vpc_id }
-  secondary_aws_vpcs = { for k, v in var.secondary_aws_regions : v.region => aviatrix_vpc.controller_cloud[k].vpc_id }
+  secondary_aws_vpcs = { for k, v in var.secondary_aws_regions : k => aviatrix_vpc.controller_cloud[k].vpc_id }
   azure_vnet         = local.multi_cloud ? { azure = aviatrix_vpc.multi_cloud[0].vpc_id } : {}
 }

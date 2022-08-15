@@ -25,31 +25,19 @@ module "private_mode" {
 
   multi_cloud = true
 
-  proxies = {
-    proxy1 = {
-      instance_id = "id-89717328",
-      vpc_id      = "vpc-87654321",
-    }
-    proxy2 = {
-      instance_id = "id-89713443",
-      vpc_id      = "vpc-87654321",
-    }
-  }
+  proxies = [
+    "id-89717328",
+    "id-89714234",
+  ]
 
   secondary_aws_regions = {
-    region1 = {
-        cloud            = "AWS"
-        account          = "AWS",
-        vpc_name         = "private-mode-eu-west-1",
-        region           = "eu-west-1",
-        cidr             = "10.255.0.0/28",
+    "eu-west-1" = {
+        account  = "AWS",                       #This field is optional. When left empty, it will fall back to controller account.
+        vpc_name = "private-mode-eu-west-1",    #This field is optional. When left empty, it will automatically generate a name based on the region.
+        cidr     = "10.255.0.0/28",
     }
-    region2 = {
-        cloud            = "AWS"
-        account          = "AWS",
-        vpc_name         = "private-mode-eu-west-2",
-        region           = "eu-west-2",
-        cidr             = "10.255.0.16/28",
+    "eu-west-2" = {
+        cidr     = "10.255.0.16/28",
     } 
   }
 }
@@ -73,7 +61,7 @@ Key | Supported_CSP's | Default value | Description
 enable_private_mode | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-private-mode/blob/main/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-private-mode/blob/main/img/azure.png?raw=true" title="Azure"> | true | Whether to enable Private Mode on an Aviatrix Controller.
 copilot_instance_id | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-private-mode/blob/main/img/aws.png?raw=true" title="AWS"> | true | Instance ID of a copilot instance to associate with an Aviatrix Controller in Private Mode.
 proxies | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-private-mode/blob/main/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-private-mode/blob/main/img/azure.png?raw=true" title="Azure"> | | Set of Controller proxies for Private Mode.
-secondary_aws_regions | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-private-mode/blob/main/img/aws.png?raw=true" title="AWS"> | | A map of regions where to deploy secondary AWS loadbalancers.
+secondary_aws_regions | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-private-mode/blob/main/img/aws.png?raw=true" title="AWS"> | | A map of regions where to deploy secondary AWS loadbalancers. Region must be the key!
 multi_cloud_region | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-private-mode/blob/main/img/aws.png?raw=true" title="AWS"> | | Details of multi-cloud region (non-AWS) where the loadbalancer needs to be initiated.
 
 ### Outputs
