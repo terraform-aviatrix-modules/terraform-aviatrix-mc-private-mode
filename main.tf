@@ -92,7 +92,7 @@ resource "aviatrix_vpc" "multi_cloud_endpoint" {
   )
 
   region               = var.multi_cloud_region.endpoint_region
-  name                 = try(var.multi_cloud_region.endpoint_name, format("private-mode-endpoint-%s", var.multi_cloud_region.endpoint_region))
+  name                 = try(var.multi_cloud_region.endpoint_name, format("pm-endpoint-%s", var.multi_cloud_region.endpoint_region))
   cidr                 = var.multi_cloud_region.endpoint_cidr
   aviatrix_transit_vpc = false
   aviatrix_firenet_vpc = false
