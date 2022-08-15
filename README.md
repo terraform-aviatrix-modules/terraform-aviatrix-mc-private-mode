@@ -82,3 +82,5 @@ This module will return the following outputs:
 key | description
 :---|:---
 private_mode_vpcs | A map of vpcs for all regions where private mode is deployed,to feed into the spoke and transit gateway configuration.
+multi_cloud_endpoint_vpc_id | The VPC ID of the VPC where the multi-cloud endpoint is deployed (AWS)
+multi_cloud_vpc_id | The VPC ID of the VPC where the multi-cloud loadbalancer is deployed (Azure)

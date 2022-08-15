@@ -2,3 +2,11 @@
 output "private_mode_vpcs" {
   value = merge(local.controller_vpc, local.secondary_aws_vpcs, local.azure_vnet)
 }
+
+output "multi_cloud_endpoint_vpc_id" {
+  value = local.multi_cloud ? aviatrix_vpc.multi_cloud_endpoint.vpc_id : null
+}
+
+output "multi_cloud_vpc_id" {
+  value = local.multi_cloud ? aviatrix_vpc.multi_cloud.vpc_id : null
+}
