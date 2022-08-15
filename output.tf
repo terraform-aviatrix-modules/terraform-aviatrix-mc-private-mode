@@ -4,9 +4,9 @@ output "private_mode_vpcs" {
 }
 
 output "multi_cloud_endpoint_vpc_id" {
-  value = local.multi_cloud ? aviatrix_vpc.multi_cloud_endpoint.vpc_id : null
+  value = local.multi_cloud ? aviatrix_vpc.multi_cloud_endpoint[0].vpc_id : null
 }
 
 output "multi_cloud_vpc_id" {
-  value = local.multi_cloud ? aviatrix_vpc.multi_cloud.vpc_id : null
+  value = local.multi_cloud ? aviatrix_vpc.multi_cloud[0].vpc_id : null
 }
