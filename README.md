@@ -19,17 +19,16 @@ module "private_mode" {
   source  = "terraform-aviatrix-modules/mc-private-mode/aviatrix"
   version = "1.0.0"
 
+  #Controller VPC settings
   controller_account = "AWS"
   controller_region  = "eu-central-1"
   controller_vpc_id  = "vpc-12345678"
-
-  multi_cloud = true
-
   proxies = [
-    "id-89717328",
-    "id-89714234",
+    "id-89717328", #AWS Instance ID of proxy server
+    "id-89714234", #AWS Instance ID of proxy server
   ]
 
+  #Optionally, add additional AWS regions
   secondary_aws_regions = {
     "eu-west-1" = {
         account  = "AWS",                       #This field is optional. When left empty, it will fall back to controller account.
@@ -41,11 +40,16 @@ module "private_mode" {
     } 
   }
 
-  multi_cloud_region = {
+  #Optionally, add multicloud support
+  multi_cloud = {
+
+    #Azure private mode VNET
     region           = "West Europe",
     vpc_name         = "mc-pm",               #This field is optional. When left empty, it will automatically generate a name based on the region.
     cidr             = "10.255.255.0/24",
     account          = "Azure",
+
+    #AWS Multicloud Endpoint settings
     endpoint_region  = "eu-west-2",       
     endpoint_cidr    = "10.255.254.0/24",
     endpoint_name    = "aws-endpoint",        #This field is optional. When left empty, it will automatically generate a name based on the region.

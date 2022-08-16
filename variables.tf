@@ -62,7 +62,7 @@ variable "secondary_aws_regions" {
   }
 }
 
-variable "multi_cloud_region" {
+variable "multi_cloud" {
   description = "Details of multi-cloud region (non-AWS) where the loadbalancer needs to be initiated."
   #Fix type and validation
   default = null
@@ -79,8 +79,8 @@ locals {
     aws   = 256,
   }
 
-  multi_cloud    = var.multi_cloud_region != null
-  connecting_vpc = local.multi_cloud ? [for k, v in aviatrix_vpc.controller_cloud : v.vpc_id if v.region == var.multi_cloud_region.endpoint_region] : []
+  multi_cloud    = var.multi_cloud != null
+  connecting_vpc = local.multi_cloud ? [for k, v in aviatrix_vpc.controller_cloud : v.vpc_id if v.region == var.multi_cloud.endpoint_region] : []
 
   controller_vpc     = { (var.controller_region) = var.controller_vpc_id }
   secondary_aws_vpcs = { for k, v in var.secondary_aws_regions : k => aviatrix_vpc.controller_cloud[k].vpc_id }
