@@ -88,3 +88,42 @@ key | description
 private_mode_vpcs | A map of vpcs for all regions where private mode is deployed,to feed into the spoke and transit gateway configuration.
 multi_cloud_endpoint_vpc_id | The VPC ID of the VPC where the multi-cloud endpoint is deployed (AWS)
 multi_cloud_vpc_id | The VPC ID of the VPC where the multi-cloud loadbalancer is deployed (Azure)
+
+### Using the outputs in other modules
+
+How to use it in the [mc-transit](https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit) module:
+```hcl
+module "aws_transit" {
+  source  = "terraform-aviatrix-modules/mc-transit/aviatrix"
+  version = "2.2.1"  
+  
+  cloud                  = "AWS"
+  region                 = "eu-central-1"
+  cidr                   = "10.200.0.0/23"
+  account                = "AWS"
+
+  #Private mode settings
+  private_mode_subnets   = true
+  private_mode_lb_vpc_id = module.private_mode.private_mode_vpcs["eu-central-1"]
+}
+```
+
+How to use it in the [mc-spoke](https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-spoke) module:
+```hcl
+module "mna_spokes" {
+  source  = "terraform-aviatrix-modules/mc-spoke/aviatrix"
+  version = "1.3.1"
+
+  cloud                            = "AWS"
+  name                             = "Spoke1"
+  cidr                             = "10.100.0.0/24"
+  region                           = "eu-central-1"
+  account                          = "AWS"
+  transit_gw                       = module.aws_transit.transit_gateway.gw_name
+
+  #Private mode settings
+  enable_max_performance = false    #As insane mode is enabled by default when using private mode, use this option to toggle creation of many tunnels for performance.
+  private_mode_subnets   = true
+  private_mode_lb_vpc_id = module.private_mode.private_mode_vpcs[var.region]
+}
+```
